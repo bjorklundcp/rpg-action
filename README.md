@@ -26,6 +26,13 @@ A user will be able to use one of their saved actions
 /rpgaction <action name> <modifiers>
 ```
 
+Draw initiative cards in a Savage World setting. Deck will shuffle when a Joker is drawn.
+
+```
+/rpgaction register <player1> <number of cards> <player2> <number of cards> ...
+/rpgaction draw
+```
+
 Examples:
 
 ```
@@ -40,7 +47,14 @@ Total: 14 + 1 = 15
 [8 2]
 ```
 
+```
+/rpgaction register John 1 Jane 3
+/rpgaction draw
+
+John: 5 of Hearts
+Jane 10 of Clubs, 2 of Diamonds, Black Joker
+```
+
 ## Future Ideas
 
-1) Savage World DM actions like drawing initiative cards
-2) Dice actions from other RPG rule sets (like dice pooling)
+1) Dice actions from other RPG rule sets (like dice pooling)
