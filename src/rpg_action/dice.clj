@@ -1,4 +1,4 @@
-(ns rpg-action.utils)
+(ns rpg-action.dice)
 
 (defn roll
   [max]
