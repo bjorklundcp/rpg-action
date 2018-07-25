@@ -9,11 +9,10 @@
    (process-roll max false))
   ([max explode?]
    (if explode?
-     (let [last-roll (atom (roll max))
-           all-rolls (atom (conj [] @last-roll))]
-       (while (= @last-roll max)
-         (do
-           (reset! last-roll (roll max))
-           (reset! all-rolls (conj @all-rolls @last-roll))))
-       @all-rolls)
+     (loop [last-roll (roll max)
+            rolls [last-roll]]
+       (if (= last-roll max)
+         (let [new-roll (roll max)]
+           (recur new-roll (conj rolls new-roll)))
+         rolls))
      (roll max))))
