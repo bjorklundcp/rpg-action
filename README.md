@@ -14,7 +14,7 @@ To start a web server for the application, run:
 
 ## MVP
 
-A user will be able to save a dice action.
+A user will be able to save a Savage World dice action.
 
 ```
 /rpgaction save <action name> <dice rules> <modifiers>
@@ -39,3 +39,8 @@ Total: 14 + 1 = 15
 [4]
 [8 2]
 ```
+
+## Future Ideas
+
+1) Savage World DM actions like drawing initiative cards
+2) Dice actions from other RPG rule sets (like dice pooling)
