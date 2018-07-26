@@ -1,7 +1,7 @@
 (ns rpg-action.handler
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [rpg-action.dice :as dice]))
 
 (defroutes app-routes
@@ -10,4 +10,4 @@
   (route/not-found "Not Found"))
 
 (def app
-  (wrap-defaults app-routes site-defaults))
+  (wrap-defaults app-routes api-defaults))
