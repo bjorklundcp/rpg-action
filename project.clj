@@ -5,7 +5,8 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [compojure "1.6.1"]
                  [ring/ring-defaults "0.3.2"]
-                 [ring/ring-json "0.4.0"]]
+                 [ring/ring-json "0.4.0"]
+                 [com.taoensso/timbre "4.10.0"]]
   :plugins [[lein-ring "0.12.4"]]
   :ring {:handler rpg-action.handler/app}
   :profiles

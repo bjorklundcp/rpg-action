@@ -72,7 +72,26 @@
 
 (defn deal-round!
   []
-  (let [cards (draw-cards! (count (:players @state)))]
-    (map-indexed #(hash-map {:player %2 ::card (nth cards %1)}) (:players @state))))
+  (let [cards (->> (draw-cards! (reduce #(+ %1
+                                            (get-in %2 [:card-modifier :number] 1))
+                                        0
+                                        (:players @state)))
+                   (into []))]
+    (->> (reduce (fn [{:keys [i] :as acc} player]
+                   (let [num-cards (get-in player [:card-modifier :number] 1)
+                         positive? (get-in player [:card-modifier :positive?] true)
+                         my-cards (subvec cards i (+ i num-cards))
+                         my-sorted-cards (sort-by cards/order-card my-cards)
+                         my-card (if positive?
+                                   (last my-sorted-cards)
+                                   (first my-sorted-cards))]
+                     (-> acc
+                         (update :results conj {:card my-card :player player})
+                         (update :i + num-cards))))
+                 {:i 0 :results []}
+                 (:players @state))
+         :results
+         (sort-by (comp cards/order-card :card))
+         (reverse))))
 (s/fdef deal-round!
         :ret ::turns)

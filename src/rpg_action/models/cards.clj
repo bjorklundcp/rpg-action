@@ -22,32 +22,48 @@
                     :black-joker ::black-joker
                     :regular-card ::regular-card))
 
-(defn compare-card
-  [x y]
+(defn order-card
+  [card]
   (cond
-    (= x red-joker)
-    false
+    (= card red-joker)
+    53
 
-    (= y red-joker)
-    true
-
-    (= x black-joker)
-    false
-
-    (= y black-joker)
-    true
-
-    (< (.indexOf ordered-ranks (:rank x))
-       (.indexOf ordered-ranks (:rank y)))
-    true
-
-    (> (.indexOf ordered-ranks (:rank x))
-       (.indexOf ordered-ranks (:rank y)))
-    false
+    (= card black-joker)
+    52
 
     :default
-    (< (.indexOf ordered-suits (:suit x))
-       (.indexOf ordered-suits (:suit y)))))
+    (+ (* (.indexOf ordered-ranks (:rank card)) 4)
+       (.indexOf ordered-suits (:suit card)))))
+(s/fdef order-card
+        :args (s/cat :card ::card)
+        :ret int?)
+;
+;(defn compare-card
+;  [x y]
+;  (cond
+;    (= x red-joker)
+;    false
+;
+;    (= y red-joker)
+;    true
+;
+;    (= x black-joker)
+;    false
+;
+;    (= y black-joker)
+;    true
+;
+;    (< (.indexOf ordered-ranks (:rank x))
+;       (.indexOf ordered-ranks (:rank y)))
+;    true
+;
+;    (> (.indexOf ordered-ranks (:rank x))
+;       (.indexOf ordered-ranks (:rank y)))
+;    false
+;
+;    :default
+;    (< (.indexOf ordered-suits (:suit x))
+;       (.indexOf ordered-suits (:suit y)))))
 
 (def deck (conj (for [rank ordered-ranks
                       suit ordered-suits]
