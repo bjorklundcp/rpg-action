@@ -106,8 +106,7 @@
                       :slack-name     "@chartwig"}}]
            (gamestate/deal-round!)))
     (is (= 47
-           (-> @gamestate/state :deck count)))
-    (pprint/pprint @gamestate/state))
+           (-> @gamestate/state :deck count))))
   (testing "Round 2"
     (is (= [{:card   {:rank :Q
                       :suit :hearts}
