@@ -15,14 +15,22 @@
 (defmethod response :default [resp]
   resp)
 
-(def help-text (utils/long-str "Valid commands: save, list, draw, <action name>"
-                               "To save a new action: /rpgaction save <action name> <dice notation> <modifiers>"
-                               "To list your saved actions: /rpgaction list"
-                               "To use one of your saved actions: /rpgaction <action name> <modifiers>"
-                               "-----------------------------------------------------------------------"
-                               "GM Utils:"
-                               "To add a player: /rpgaction addplayer <character name> <player handle> [<+/- card advantage]"
-                               "To draw initiation cards: /rpgaction draw"))
+(def arthas-gifs ["https://media.giphy.com/media/eWCBWXxgzbOUg/giphy.gif"
+                  "https://media.giphy.com/media/13HgB1M0bQ2VlS/giphy.gif"
+                  "https://media.giphy.com/media/jwS8YzkXccIbC/giphy.gif"
+                  "https://media.giphy.com/media/xIUzdQ8qKoqMo/giphy.gif"
+                  "https://media.giphy.com/media/2cO3FAYVO634I/giphy.gif"])
+
+(defn return-help-text
+  [help-option]
+  (case help-option
+    "gm" (utils/long-str "To add a player: /rpgaction addplayer <character name> <player handle> [<+/- card advantage]"
+                         "To draw initiation cards: /rpgaction draw")
+    "dice" "TODO"
+    (utils/long-str "Valid commands: save, list, draw, <action name>"
+                    "To save a new action: /rpgaction save <action name> <dice notation> <modifiers>"
+                    "To list your saved actions: /rpgaction list"
+                    "To use one of your saved actions: /rpgaction <action name> <modifiers>")))
 
 (def not-found-text "Command not found... I think you're doing it wrong... :face_with_rolling_eyes:")
 
@@ -38,4 +46,6 @@
 (defroutes slack-routes
   (POST "/command" request
     (case (get-in request [:command :type])
-      :help (response help-text))))
+      :help (response (return-help-text (get-in request [:command :help-option] nil)))
+      :test (response {:attachments [{:title "FROSTMOURNE HUNGERS!"
+                                      :image_url (rand-nth arthas-gifs)}]}))))
