@@ -5,5 +5,6 @@
 
 (deftest help
   (is (s/valid? ::commands/command [:help]))
-  (is (s/valid? ::commands/command [:help :help]))
+  (is (s/valid? ::commands/command [:help :gm]))
+  (is (s/valid? ::commands/command [:help :dice]))
   (is (not (s/valid? ::commands/command [:help :spoon]))))
