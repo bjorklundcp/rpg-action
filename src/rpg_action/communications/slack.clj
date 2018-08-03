@@ -15,16 +15,24 @@
 (defmethod response :default [resp]
   resp)
 
+(def not-found-text "Command not found... I think you're doing it wrong... :face_with_rolling_eyes:")
+
 (def help-text (utils/long-str "Valid commands: save, list, draw, <action name>"
                                "To save a new action: /rpgaction save <action name> <dice notation> <modifiers>"
                                "To list your saved actions: /rpgaction list"
-                               "To use one of your saved actions: /rpgaction <action name> <modifiers>"
-                               "-----------------------------------------------------------------------"
-                               "GM Utils:"
-                               "To add a player: /rpgaction addplayer <character name> <player handle> [<+/- card advantage]"
-                               "To draw initiation cards: /rpgaction draw"))
+                               "To use one of your saved actions: /rpgaction <action name> <modifiers>"))
 
-(def not-found-text "Command not found... I think you're doing it wrong... :face_with_rolling_eyes:")
+(def dice-help-text "TODO")
+
+(def gm-help-text (utils/long-str "To add a player: /rpgaction addplayer <character name> <player handle> [<+/- card advantage]"
+                                  "To draw initiation cards: /rpgaction draw"))
+
+(defn return-help-text
+  [help-option]
+  (case help-option
+    "gm" gm-help-text
+    "dice" dice-help-text
+    help-text))
 
 (defn wrap-slack [h]
   (fn [request]
@@ -38,4 +46,4 @@
 (defroutes slack-routes
   (POST "/command" request
     (case (get-in request [:command :type])
-      :help (response help-text))))
+      :help (response (return-help-text (get-in request [:command :help-option] nil))))))

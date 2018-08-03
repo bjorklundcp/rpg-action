@@ -1,7 +1,7 @@
 (ns rpg-action.models.commands
   (:require [clojure.spec.alpha :as s]))
 
-(def help-options #{:help})
+(def help-options #{:gm :dice})
 (defn help-option?
   [option]
   (contains? help-options (keyword option)))
