@@ -15,12 +15,6 @@
 (defmethod response :default [resp]
   resp)
 
-(def arthas-gifs ["https://media.giphy.com/media/eWCBWXxgzbOUg/giphy.gif"
-                  "https://media.giphy.com/media/13HgB1M0bQ2VlS/giphy.gif"
-                  "https://media.giphy.com/media/jwS8YzkXccIbC/giphy.gif"
-                  "https://media.giphy.com/media/xIUzdQ8qKoqMo/giphy.gif"
-                  "https://media.giphy.com/media/2cO3FAYVO634I/giphy.gif"])
-
 (defn return-help-text
   [help-option]
   (case help-option
@@ -46,6 +40,4 @@
 (defroutes slack-routes
   (POST "/command" request
     (case (get-in request [:command :type])
-      :help (response (return-help-text (get-in request [:command :help-option] nil)))
-      :test (response {:attachments [{:title "FROSTMOURNE HUNGERS!"
-                                      :image_url (rand-nth arthas-gifs)}]}))))
+      :help (response (return-help-text (get-in request [:command :help-option] nil))))))
