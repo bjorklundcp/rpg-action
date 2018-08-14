@@ -9,11 +9,11 @@
   (f))
 
 (defn death-wagon-fixture [f]
-  (gamestate/add-player! {:character-name "Myzrael" :slack-name "@chardizzeroony"})
-  (gamestate/add-player! {:character-name "Squiddlykins" :slack-name "@chartwig" :card-modifier {:number 2 :positive? false}})
-  (gamestate/add-player! {:character-name "Teclis" :slack-name "@cbjorklund" :card-modifier {:number 2 :positive? true}})
-  (gamestate/add-player! {:character-name "Thog" :slack-name "@abel"})
-  (gamestate/add-player! {:character-name "Ulruk" :slack-name "@res378"})
+  (gamestate/add-player! {:character-name "Myzrael" :player-name "@chardizzeroony" :card-modifier {:number 1 :positive? true}})
+  (gamestate/add-player! {:character-name "Squiddlykins" :player-name "@chartwig" :card-modifier {:number 2 :positive? false}})
+  (gamestate/add-player! {:character-name "Teclis" :player-name "@cbjorklund" :card-modifier {:number 2 :positive? true}})
+  (gamestate/add-player! {:character-name "Thog" :player-name "@abel" :card-modifier {:number 1 :positive? true}})
+  (gamestate/add-player! {:character-name "Ulruk" :player-name "@res378" :card-modifier {:number 1 :positive? true}})
   (f))
 
 (defn stack-deck-fixture [f]
@@ -82,28 +82,34 @@
            (-> @gamestate/state :deck count)))
     (is (= [{:card   {:rank :K
                       :suit :spades}
-             :player {:character-name "Myzrael"
-                      :slack-name     "@chardizzeroony"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Myzrael"
+                      :player-name     "@chardizzeroony"}}
             {:card   {:rank :K
                       :suit :clubs}
-             :player {:character-name "Ulruk"
-                      :slack-name     "@res378"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Ulruk"
+                      :player-name     "@res378"}}
             {:card   {:rank :8
                       :suit :spades}
-             :player {:character-name "Thog"
-                      :slack-name     "@abel"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Thog"
+                      :player-name     "@abel"}}
             {:card   {:rank :5
                        :suit :diamonds}
              :player {:card-modifier  {:number    2
                                        :positive? true}
                       :character-name "Teclis"
-                      :slack-name     "@cbjorklund"}}
+                      :player-name     "@cbjorklund"}}
             {:card   {:rank :2
                       :suit :spades}
              :player {:card-modifier  {:number    2
                                        :positive? false}
                       :character-name "Squiddlykins"
-                      :slack-name     "@chartwig"}}]
+                      :player-name     "@chartwig"}}]
            (gamestate/deal-round!)))
     (is (= 47
            (-> @gamestate/state :deck count))))
@@ -113,80 +119,98 @@
              :player {:card-modifier  {:number    2
                                        :positive? true}
                       :character-name "Teclis"
-                      :slack-name     "@cbjorklund"}}
+                      :player-name     "@cbjorklund"}}
             {:card   {:rank :J
                       :suit :clubs}
-             :player {:character-name "Myzrael"
-                      :slack-name     "@chardizzeroony"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Myzrael"
+                      :player-name     "@chardizzeroony"}}
             {:card   {:rank :6
                       :suit :hearts}
              :player {:card-modifier  {:number    2
                                        :positive? false}
                       :character-name "Squiddlykins"
-                      :slack-name     "@chartwig"}}
+                      :player-name     "@chartwig"}}
             {:card   {:rank :4
                       :suit :diamonds}
-             :player {:character-name "Ulruk"
-                      :slack-name     "@res378"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Ulruk"
+                      :player-name     "@res378"}}
             {:card   {:rank :2
                       :suit :diamonds}
-             :player {:character-name "Thog"
-                      :slack-name     "@abel"}}]
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Thog"
+                      :player-name     "@abel"}}]
            (gamestate/deal-round!)))
     (is (= 40
           (-> @gamestate/state :deck count))))
   (testing "Round 3"
     (is (= [{:card   {:rank :K
                       :suit :spades}
-             :player {:character-name "Myzrael"
-                      :slack-name     "@chardizzeroony"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Myzrael"
+                      :player-name     "@chardizzeroony"}}
             {:card   {:rank :K
                       :suit :clubs}
-             :player {:character-name "Ulruk"
-                      :slack-name     "@res378"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Ulruk"
+                      :player-name     "@res378"}}
             {:card   {:rank :8
                       :suit :spades}
-             :player {:character-name "Thog"
-                      :slack-name     "@abel"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Thog"
+                      :player-name     "@abel"}}
             {:card   {:rank :5
                       :suit :diamonds}
              :player {:card-modifier  {:number    2
                                        :positive? true}
                       :character-name "Teclis"
-                      :slack-name     "@cbjorklund"}}
+                      :player-name     "@cbjorklund"}}
             {:card   {:rank :2
                       :suit :spades}
              :player {:card-modifier  {:number    2
                                        :positive? false}
                       :character-name "Squiddlykins"
-                      :slack-name     "@chartwig"}}
+                      :player-name     "@chartwig"}}
             (gamestate/deal-round!)]))
     (is (= 33
           (-> @gamestate/state :deck count))))
   (testing "Round 4"
     (is (= [{:card   :red-joker
-             :player {:character-name "Thog"
-                      :slack-name     "@abel"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Thog"
+                      :player-name     "@abel"}}
             {:card   {:rank :A
                       :suit :clubs}
              :player {:card-modifier  {:number    2
                                        :positive? true}
                       :character-name "Teclis"
-                      :slack-name     "@cbjorklund"}}
+                      :player-name     "@cbjorklund"}}
             {:card   {:rank :9
                       :suit :diamonds}
-             :player {:character-name "Ulruk"
-                      :slack-name     "@res378"}}
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Ulruk"
+                      :player-name     "@res378"}}
             {:card   {:rank :7
                       :suit :hearts}
              :player {:card-modifier  {:number    2
                                        :positive? false}
                       :character-name "Squiddlykins"
-                      :slack-name     "@chartwig"}}
+                      :player-name     "@chartwig"}}
             {:card   {:rank :2
                       :suit :hearts}
-             :player {:character-name "Myzrael"
-                      :slack-name     "@chardizzeroony"}}]
+             :player {:card-modifier {:number    1
+                                      :positive? true}
+                      :character-name "Myzrael"
+                      :player-name     "@chardizzeroony"}}]
           (gamestate/deal-round!)))
     (is (= 54
            (-> @gamestate/state :deck count)))))
