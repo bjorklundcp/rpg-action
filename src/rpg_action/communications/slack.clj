@@ -44,7 +44,7 @@
               (str (:character-name player) " (" (:player-name player) ") " (cards/repr-map card)))
             round)
        (str/join "\n")
-       (str "New Round: \n")))
+       (str gamestate/new-round-str "\n")))
 
 
 ; API

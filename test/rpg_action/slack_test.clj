@@ -7,7 +7,8 @@
             [rpg-action.cards-test :as cards-test]
             [rpg-action.players-test :as players-test]
             [clojure.spec.test.alpha :as st]
-            [rpg-action.utils :as utils]))
+            [rpg-action.utils :as utils]
+            [rpg-action.gamestate :as gamestate]))
 
 (use-fixtures :each players-test/clean-players-fixture cards-test/death-wagon-fixture cards-test/stack-deck-fixture)
 
@@ -52,7 +53,8 @@
 
   (testing "rounds for dayz"
     (let [response (app (mock/request :post "/slack/command" {:text "deal"}))]
-      (is (= (utils/long-str "Myzrael (@chardizzeroony) :king::spades:"
+      (is (= (utils/long-str gamestate/new-round-str
+                             "Myzrael (@chardizzeroony) :king::spades:"
                              "Ulruk (@res378) :king::clubs:"
                              "Thog (@abel) :eight::spades:"
                              "Teclis (@cbjorklund) :five::diamonds:"

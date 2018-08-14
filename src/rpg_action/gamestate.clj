@@ -85,6 +85,8 @@
 (s/def ::turn (s/keys :req-un [::cards/card ::players/player]))
 (s/def ::turns (s/coll-of ::turn))
 
+(def new-round-str "New Round:")
+
 (defn deal-round!
   []
   (when (seq (:players @state))
