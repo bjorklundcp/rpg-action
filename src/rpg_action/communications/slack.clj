@@ -6,10 +6,12 @@
             [compojure.core :refer :all]
             [rpg-action.utils :as utils]
             [rpg-action.gamestate :as gamestate]
-            [spec-tools.core :as st]
             [clojure.pprint :as pprint]
             [rpg-action.models.players :as players]
-            [rpg-action.models.cards :as cards])
+            [rpg-action.models.cards :as cards]
+            [environ.core :refer [env]]
+            [pandect.algo.sha256 :as sha256])
+
   (:import (clojure.lang PersistentArrayMap PersistentVector PersistentList)))
 
 ; Generic Strings
@@ -17,7 +19,8 @@
 (def no-player-found-text "No player or character '%s' was found.")
 
 (def not-found-text "Command not found... I think you're doing it wrong... :face_with_rolling_eyes:")
-(def generic-ok "OK!")
+(def generic-ok-text "OK!")
+(def forbidden-text "Forbidden")
 
 ; Help command Helpers
 (def generic-help-text (utils/long-str "Valid commands: save, list, draw, <action name>"
@@ -61,7 +64,25 @@
 (defmethod response :default [resp]
   resp)
 
-(defn wrap-slack [h]
+(def slack-api-version "v0")
+(defn wrap-slack-verify-token [h]
+  (fn [request]
+    (if (= :post (:request-method request))
+      (let [body (-> (:original-body request)
+                     slurp)
+            timestamp (get-in request [:headers "x-slack-request-timestamp"])
+            expected-signature-basestring (str slack-api-version ":" timestamp ":" body)
+            signing-secret (env :slack-signing-secret)
+            expected-signature (str slack-api-version "=" (sha256/sha256-hmac expected-signature-basestring signing-secret))
+            actual-signature (get-in request [:headers "x-slack-signature"])]
+        (if (= expected-signature actual-signature)
+          (h request)
+          (-> (response forbidden-text)
+              (ring-response/status 403))))
+      (-> (response forbidden-text)
+          (ring-response/status 403)))))
+
+(defn wrap-slack-command [h]
   (fn [request]
     (let [command (-> (get-in request [:params :text] "")
                       (str/split #" ")
@@ -77,10 +98,10 @@
       (case command
         :help (response (help-text (:help-option command-params)))
         :addplayer (do (gamestate/add-player! command-params)
-                       (response generic-ok))
+                       (response generic-ok-text))
         :removeplayer (if-let [players-removed (seq (concat (gamestate/remove-player-by-player-name! (:name command-params))
                                                             (gamestate/remove-player-by-character-name! (:name command-params))))]
-                        (response generic-ok)
+                        (response generic-ok-text)
                         (response (format no-player-found-text (:name command-params))))
         :listplayers (let [players (gamestate/list-players)]
                        (if (seq players)

@@ -10,14 +10,21 @@
                  [com.taoensso/timbre "4.10.0"]
                  [cheshire "5.8.0"]
                  [metosin/spec-tools "0.7.1"]
-                 [orchestra "2017.11.12-1"]]
-  :plugins [[lein-ring "0.12.4"]]
+                 [orchestra "2017.11.12-1"]
+                 [environ "1.1.0"]
+                 [pandect "0.6.1"]]
+  :plugins [[lein-environ "1.1.0"]
+            [lein-ring "0.12.4"]]
   :ring {:handler rpg-action.handler/app}
-  :profiles {:dev  {:dependencies [[javax.servlet/servlet-api "2.5"]
-                                   [ring/ring-mock "0.3.2"]]
-                    :injections [(require 'rpg-action.handler)
-                                 (require 'orchestra.spec.test)
-                                 (orchestra.spec.test/instrument)]}
-             :test {:injections [(require 'rpg-action.handler)
-                                 (require 'orchestra.spec.test)
-                                 (orchestra.spec.test/instrument)]}})
+  :profiles {:dev [:project/dev :profiles/dev]
+             :test [:project/test :profiles/test]
+             :profiles/dev {}
+             :profiles/test {}
+             :project/dev  {:dependencies [[javax.servlet/servlet-api "2.5"]
+                                           [ring/ring-mock "0.3.2"]]
+                            :injections [(require 'rpg-action.handler)
+                                         (require 'orchestra.spec.test)
+                                         (orchestra.spec.test/instrument)]}
+             :project/test {:injections [(require 'rpg-action.handler)
+                                         (require 'orchestra.spec.test)
+                                         (orchestra.spec.test/instrument)]}})

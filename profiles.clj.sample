@@ -1,0 +1,2 @@
+{:profiles/dev  {:env {:slack-signing-secret "<REPLACE ME>"}}
+ :profiles/test {:env {:database-url "12345"}}}

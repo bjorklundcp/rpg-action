@@ -10,18 +10,41 @@
             [rpg-action.communications.slack :as cm-slack]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint]
+            [clojure.java.io :refer [input-stream reader]])
+  (:import (java.io ByteArrayOutputStream ByteArrayInputStream InputStream)))
 
 (defroutes app-routes
   (context "/slack" []
     (-> #'cm-slack/slack-routes
-        cm-slack/wrap-slack))
+        cm-slack/wrap-slack-command
+        cm-slack/wrap-slack-verify-token))
   (GET "/" [] (let [roll (dice/process-roll 8 true)]
                  (str "Refresh for another d8! roll<br>" roll " = " (reduce + roll))))
   (route/not-found "Not Found"))
 
+(defn slurp-bytes [input]
+  (with-open [reader (input-stream input)]
+    (let [bais (ByteArrayOutputStream.)]
+      (loop []
+        (let [b (.read reader)]
+          (when-not (= -1 b)
+            (.write bais b)
+            (recur))))
+      (.toByteArray bais))))
+
+(defn copy-body [h]
+  (fn [r]
+    (if (instance? InputStream (:body r))
+      (let [ba (slurp-bytes (:body r))]
+        (h (assoc r
+             :body (ByteArrayInputStream. ba)
+             :original-body (ByteArrayInputStream. ba))))
+      (h (assoc r :original-body (:body r))))))
+
 (def app
   (-> app-routes
       wrap-json-response
-      (wrap-defaults api-defaults)))
+      (wrap-defaults api-defaults)
+      copy-body))
 
