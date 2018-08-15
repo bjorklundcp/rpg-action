@@ -21,7 +21,7 @@ To start a web server for the application, run:
 A user will be able to save a Savage World dice action.
 
 ```
-/rpgaction save <act    ion name> <dice rules> <modifiers>
+/rpgaction save <action name> <dice rules> <modifiers>
 ```
 
 A user will be able to use one of their saved actions
