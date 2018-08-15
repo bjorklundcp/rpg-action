@@ -19,7 +19,7 @@
   :profiles {:dev [:project/dev :profiles/dev]
              :test [:project/test :profiles/test]
              :profiles/dev {}
-             :profiles/test {}
+             :profiles/test {:env {:slack-signing-secret "12345"}}
              :project/dev  {:dependencies [[javax.servlet/servlet-api "2.5"]
                                            [ring/ring-mock "0.3.2"]]
                             :injections [(require 'rpg-action.handler)
