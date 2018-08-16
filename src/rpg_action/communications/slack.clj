@@ -6,12 +6,11 @@
             [compojure.core :refer :all]
             [rpg-action.utils :as utils]
             [rpg-action.gamestate :as gamestate]
-            [clojure.pprint :as pprint]
             [rpg-action.models.players :as players]
             [rpg-action.models.cards :as cards]
             [environ.core :refer [env]]
-            [pandect.algo.sha256 :as sha256])
-
+            [pandect.algo.sha256 :as sha256]
+            [rpg-action.dice :as dice])
   (:import (clojure.lang PersistentArrayMap PersistentVector PersistentList)))
 
 ; Generic Strings
@@ -111,4 +110,5 @@
         :deal (if-let [round (gamestate/deal-round!)]
                 (response {:response_type "in_channel"
                            :text (format-card-round round)})
-                (response no-players-text))))))
+                (response no-players-text))
+        :roll (response (dice/interpret-roll-command (:dice-option command-params)))))))

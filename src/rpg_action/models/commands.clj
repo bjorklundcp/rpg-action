@@ -13,6 +13,8 @@
   (contains? help-options (keyword option)))
 (defmethod command :help [_]
   (s/cat :type #{:help} :help-option (s/? help-option?)))
+(defmethod command :roll [_]
+  (s/cat :type #{:roll} :dice-option (s/+ string?)))
 
 ; addplayer command
 (def card-modifier-regex #"^([+-]?)(\d+)$")
