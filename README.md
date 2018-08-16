@@ -6,6 +6,10 @@ You will need [Leiningen][] 2.0.0 or above installed.
 
 [leiningen]: https://github.com/technomancy/leiningen
 
+Copy profiles.clj.sample to profiles.clj
+
+Replace the boilerplate slack signing secret with the one from your slack application
+
 ## Running
 
 To start a web server for the application, run:
