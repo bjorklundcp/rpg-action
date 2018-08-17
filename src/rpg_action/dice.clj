@@ -54,6 +54,7 @@
   "Processes a modifier for the roll. If no + or - is on the number, + is assumed.
   Returns an object of the following form:
   {:modifer + or -
+   :value   the integer value
    :display the string with the modifier and the number (+2, -4, etc)
    :total   the integer total of the modifier}"
   [modifier-command]
@@ -61,6 +62,7 @@
         modifier (or (nth de-structured-modifier-command 1) "+")
         modifier-value (Integer. (re-find #"\d+" (nth de-structured-modifier-command 2)))]
     {:modifier modifier
+     :value    modifier-value
      :display  (str modifier " " modifier-value)
      :total    (if (= "-" modifier)
                  (* -1 modifier-value)
@@ -96,20 +98,22 @@
                                (if roll-data
                                  (let [roll-string (map-indexed (fn [i data]
                                                                   (if (zero? i)
-                                                                    (str (if (= "-" (:modifier data)) "-" "") (:total data))
-                                                                    (str (if (= "-" (:modifier data)) " - " " + ") (:total data))))
+                                                                    (str (:total data))
+                                                                    (if (:modifier data)
+                                                                      (str " " (:modifier data) " " (:value data))
+                                                                      (str " + " (:total data)))))
                                                                 (first roll-data))]
                                    (if (next roll-data)
                                      (recur (str final-string (string/join roll-string) " ^ ") (next roll-data))
                                      (recur (str final-string (string/join roll-string)) (next roll-data))))
                                  final-string))
         formatted-modifiers (->> (:total-modifiers roll-data)
-                                 (map #(str (:display %)))
+                                 (map #(str (:modifier %) " " (:value %)))
                                  string/join)]
     (if (and (not (re-find #"([\+\^-])" formatted-dice-rolls)) (= "" formatted-modifiers))
-      (str "rolled "
+      (str "You rolled "
            formatted-dice-rolls)
-      (str "rolled "
+      (str "You rolled "
            formatted-dice-rolls
            (when-not (= "" formatted-modifiers) (str " " formatted-modifiers))
            " = "
@@ -161,32 +165,31 @@
                                  bold-numbers-in-string)
                     :fields (generate-message-body (:roll-tree roll-data))}]}))
 
-(defn interpret-roll-command
+(defn generate-roll-data
   "Consumes a list of roll commands, parses each command and processes them into rolls/data.
-  unknown artifacts are ignored and passed over
-  Example: ['2d6' '+2' '^' 'd8!' '-2'] --> {:roll-tree [[{:roll    '2d6'
-                                                          :display '2d6'
-                                                          :result  [4 6]
-                                                          :total   10}
-                                                         {:modifier '+'
-                                                          :display  '+2'
-                                                          :total    2}]
-                                                        [{:roll    '1d8'
-                                                          :display '1d8!'
-                                                          :result  [8 1]
-                                                          :total   9}]]
-                                            :total-modifiers [{:modifier '-'
-                                                               :display  '-2'
-                                                               :total    2-}]
-                                            :total 10}
-  roll-tree is a list of lists. Each list is rolls and modifiers that need to be compared to each other
-  total-modifiers are any +/-N that are at the end of the expression. These are not a part of any comparisons in the roll-tree
-  but rather applied to the final total
-  total is the final total of the roll expression. It is max(sum(totals in roll-tree)) + sum(totals in total-modifiers)
-  In the above example total is 12 ^ 9 - 2 = 10"
-  [roll-command]
-  (let [tokenized-roll-command (map string/trim roll-command)
-        roll-data (loop [roll-tree [[]]
+   unknown artifacts are ignored and passed over
+   Example: ['2d6' '+2' '^' 'd8!' '-2'] --> {:roll-tree [[{:roll    '2d6'
+                                                           :display '2d6'
+                                                           :result  [4 6]
+                                                           :total   10}
+                                                          {:modifier '+'
+                                                           :display  '+2'
+                                                           :total    2}]
+                                                         [{:roll    '1d8'
+                                                           :display '1d8!'
+                                                           :result  [8 1]
+                                                           :total   9}]]
+                                             :total-modifiers [{:modifier '-'
+                                                                :display  '-2'
+                                                                :total    2-}]
+                                             :total 10}
+   roll-tree is a list of lists. Each list is rolls and modifiers that need to be compared to each other
+   total-modifiers are any +/-N that are at the end of the expression. These are not a part of any comparisons in the roll-tree
+   but rather applied to the final total
+   total is the final total of the roll expression. It is max(sum(totals in roll-tree)) + sum(totals in total-modifiers)
+   In the above example total is 12 ^ 9 - 2 = 10"
+  [tokenized-roll-command]
+  (let [roll-data (loop [roll-tree [[]]
                          depth 0
                          roll-command tokenized-roll-command]
                     (if roll-command
@@ -215,10 +218,10 @@
                                               #(contains? % :modifier)
                                               (get-in roll-tree [depth]))]
                         {:roll-tree (update-in roll-tree
-                                      [depth]
-                                      (fn [last-roll]
-                                        (into []
-                                              (remove #(contains? % :modifier) last-roll))))
+                                               [depth]
+                                               (fn [last-roll]
+                                                 (into []
+                                                       (remove #(contains? % :modifier) last-roll))))
                          :total-modifiers total-modifiers})))
         roll-total (->> (:roll-tree roll-data)
                         (map
@@ -233,4 +236,15 @@
                          (map :total)
                          (reduce +)
                          (+ roll-total))]
-    (format-slack-message (assoc roll-data :total final-total))))
+    (assoc roll-data :total final-total)))
+
+(defn interpret-roll-command
+  "The entry point for generating a dice roll
+  1. Take in a list of dice commands
+  2. Strip excess white space from each of them
+  3. Generate roll data from the list of commands
+  4. Process those into a properly formatted slack message
+  5. Returns the slack message"
+  [roll-command]
+  (let [tokenized-roll-command (map string/trim roll-command)]
+    (format-slack-message (generate-roll-data tokenized-roll-command))))
