@@ -28,127 +28,24 @@
       (with-redefs [rand-int (fn [max] 7)]
         (is (= [8] (dice/roll 8 false)))))))
 
-(deftest test-generate-roll-data
-  (testing "We should get the correct roll data for different roll commands"
+(deftest test-parse-command-into-data
+  (testing "Given a string command, we should generate either
+  roll data, modifier data, value data, or simply return a ^"
     (with-redefs [rand-int (fn [max] 4)]
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}]]
-              :total-modifiers []
-              :total           5}
-             (dice/generate-roll-data ["d6"])))
-      (is (= {:roll-tree       [[{:roll    "10d6"
-                                  :display "10d6"
-                                  :result  [5 5 5 5 5 5 5 5 5 5]
-                                  :total   50}]]
-              :total-modifiers []
-              :total           50}
-             (dice/generate-roll-data ["10d6"])))
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}]]
-              :total-modifiers [{:modifier "+"
-                                 :value    2
-                                 :display  "+ 2"
-                                 :total    2}]
-              :total           7}
-             (dice/generate-roll-data ["d6" "2"])))
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}]]
-              :total-modifiers [{:modifier "-"
-                                 :value    2
-                                 :display  "- 2"
-                                 :total    -2}]
-              :total           3}
-             (dice/generate-roll-data ["d6" "-2"])))
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}]
-                                [{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}]]
-              :total-modifiers []
-              :total           5}
-             (dice/generate-roll-data ["d6" "^" "d6"])))
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}
-                                 {:roll    "1d8"
-                                  :display "1d8"
-                                  :result  [5]
-                                  :total   5}
-                                 {:roll    "1d10"
-                                  :display "1d10"
-                                  :result  [5]
-                                  :total   5}
-                                 {:roll    "1d20"
-                                  :display "1d20"
-                                  :result  [5]
-                                  :total   5}]]
-              :total-modifiers []
-              :total           20}
-             (dice/generate-roll-data ["d6" "d8" "d10" "d20"])))
-      (is (= {:roll-tree       [[{:roll    "1d6"
-                                  :display "1d6"
-                                  :result  [5]
-                                  :total   5}
-                                 {:modifier "+"
-                                  :value    10
-                                  :display  "+ 10"
-                                  :total    10}]
-                                [{:roll     "1d20"
-                                  :display  "1d20"
-                                  :result   [5]
-                                  :total    5}]]
-              :total-modifiers [{:modifier "+"
-                                 :value    30
-                                 :display  "+ 30"
-                                 :total    30}]
-              :total           45}
-             (dice/generate-roll-data ["d6" "10" "^" "d20" "30"])))
-      (let [loaded-dice (atom 7)]
-        (with-redefs [rand-int (fn [max]
-                                 (if (= @loaded-dice 7)
-                                   (do
-                                     (reset! loaded-dice 2)
-                                     7)
-                                   (do
-                                     (reset! loaded-dice 7)
-                                     2)))]
-          (is (= {:roll-tree       [[{:roll    "1d8"
-                                      :display "1d8"
-                                      :result  [8]
-                                      :total   8}
-                                     {:modifier "+"
-                                      :value    10
-                                      :display  "+ 10"
-                                      :total    10}]
-                                    [{:roll     "1d20"
-                                      :display  "1d20"
-                                      :result   [3]
-                                      :total    3}]]
-                  :total-modifiers []
-                  :total           18}
-                 (dice/generate-roll-data ["d8" "10" "^" "d20"])))
-          (is (= {:roll-tree       [[{:roll    "1d8"
-                                      :display "1d8!"
-                                      :result  [8 3]
-                                      :total   11}]]
-                  :total-modifiers []
-                  :total           11}
-                 (dice/generate-roll-data ["d8!"])))))))
-  (testing "An integer with no modifier should be treated as addition"
-    (with-redefs [rand-int (fn [max] 1)]
-      (is (= (dice/generate-roll-data ["d6" "+2"]) (dice/generate-roll-data ["d6" "2"]))))))
+      (is (= {:roll    "1d6"
+              :display "1d6"
+              :result  [5]
+              :total   5}
+             (dice/parse-command-into-data "d6"))))
+    (is (= {:display  "X"
+            :modifier *}
+           (dice/parse-command-into-data "*")))
+    (is (= {:total   5}
+           (dice/parse-command-into-data "5")))
+    (is (= "^"
+           (dice/parse-command-into-data "^")))))
 
-(deftest test-process-roll
+(deftest test-generate-roll-data
   (let [loaded-dice (atom 7)]
     (with-redefs [rand-int (fn [max]
                              (if (= @loaded-dice 7)
@@ -159,114 +56,241 @@
                                  (reset! loaded-dice 7)
                                  2)))]
       (testing "We should get a roll with accompanied meta data when passed a single roll command"
-          (is (= {:roll    "1d8"
-                  :display "1d8"
-                  :result  [8]
-                  :total   8}
-                 (dice/process-roll "d8")))
-          (is (= {:roll    "3d8"
-                  :display "3d8"
-                  :result  [3 8 3]
-                  :total   14}
-                 (dice/process-roll "3d8")))
-          (is (= {:roll    "1d8"
-                  :display "1d8!"
-                  :result  [8 3]
-                  :total   11}
-                 (dice/process-roll "d8!")))))))
+        (is (= {:roll    "1d8"
+                :display "1d8"
+                :result  [8]
+                :total   8}
+               (dice/generate-roll-data "d8")))
+        (is (= {:roll    "3d8"
+                :display "3d8"
+                :result  [3 8 3]
+                :total   14}
+               (dice/generate-roll-data "3d8")))
+        (is (= {:roll    "1d8"
+                :display "1d8!"
+                :result  [8 3]
+                :total   11}
+               (dice/generate-roll-data "d8!")))))))
 
-(deftest test-process-modifier
-  (testing "We should get a modifier object when passed a single modifier command"
-    (is (= {:modifier "+"
-            :value    2
-            :display  "+ 2"
-            :total    2}
-           (dice/process-modifier "+2")))
-    (is (= {:modifier "-"
-            :value    2
-            :display  "- 2"
-            :total    -2}
-           (dice/process-modifier "-2"))))
-  (testing "A modifier should get processed the same if it is +N or just N"
-    (is (= (dice/process-modifier "100") (dice/process-modifier "+100")))))
+(deftest test-total-up-roll-data-segment
+  (testing "given a list of roll data, we should get an integer of the evaluated total"
+    (is (= 0
+           (dice/total-up-roll-data-segment [])))
+    (is (= 10
+           (dice/total-up-roll-data-segment [] 10)))
+    (is (= 100
+           (dice/total-up-roll-data-segment [{:total 100}])))
+    (is (= 200
+           (dice/total-up-roll-data-segment [{:total 100}] 100)))
+    (is (= 2
+           (dice/total-up-roll-data-segment [{:total 1} {:modifier +} {:total 1}])))
+    (is (= 0
+           (dice/total-up-roll-data-segment [{:total 5} {:modifier -} {:total 5}])))
+    (is (= 5
+           (dice/total-up-roll-data-segment [{:modifier -} {:total 5}] 10)))
+    (is (= 95
+           (dice/total-up-roll-data-segment [{:total 5}
+                                             {:modifier *}
+                                             {:total 5}
+                                             {:modifier +}
+                                             {:total 50}
+                                             {:modifier +}
+                                             {:total 20}])))
+    (is (= 30
+           (dice/total-up-roll-data-segment [{:total 2}
+                                             {:modifier *}
+                                             {:total 5}
+                                             {:modifier +}
+                                             {:total 15}
+                                             {:modifier +}
+                                             {:total 5}
+                                             {:modifier *}
+                                             {:total 10}
+                                             {:modifier /}
+                                             {:total 5}
+                                             {:modifier -}
+                                             {:total 10}
+                                             {:modifier -}
+                                             {:total 20}])))
+    (is (= 910
+           (dice/total-up-roll-data-segment [{:modifier *}
+                                             {:total 5}
+                                             {:modifier +}
+                                             {:total 15}
+                                             {:modifier /}
+                                             {:total 5}
+                                             {:modifier -}
+                                             {:total 10}
+                                             {:modifier *}
+                                             {:total 10}
+                                             {:modifier -}
+                                             {:total 20}]
+                                            100)))
+    (is (= 1
+           (dice/total-up-roll-data-segment [{:total 3}
+                                             {:modifier /}
+                                             {:total 2}])))))
+
+(deftest test-get-total-from-roll-data
+  (testing "Given a list of roll data, generate the total of the roll data"
+    (is (= 0
+           (dice/get-total-from-roll-data [])))
+    (is (= 5
+           (dice/get-total-from-roll-data [{:total 5}])))
+    (is (= 35
+           (dice/get-total-from-roll-data [{:total 5}
+                                           {:modifier +}
+                                           {:total 10}
+                                           {:modifier +}
+                                           {:total 20}])))
+    (is (= 40
+           (dice/get-total-from-roll-data [{:total 5}
+                                           {:modifier +}
+                                           {:total 10}
+                                           "^"
+                                           {:total 20}
+                                           {:modifier +}
+                                           {:total 20}])))
+    (is (= 50
+           (dice/get-total-from-roll-data [{:total 5}
+                                           {:modifier +}
+                                           {:total 10}
+                                           "^"
+                                           {:total 20}
+                                           {:modifier +}
+                                           {:total 20}
+                                           "^"
+                                           {:total 5}
+                                           {:modifier *}
+                                           {:total 20}
+                                           {:modifier -}
+                                           {:total 50}])))))
+
+(deftest test-roll-command-to-roll-data
+  (testing "We should get the correct roll data for a list of roll commands"
+    (with-redefs [rand-int (fn [max] 4)]
+      (is (= {:roll-data       [{:roll    "1d6"
+                                 :display "1d6"
+                                 :result  [5]
+                                 :total   5}]
+              :final-modifiers []
+              :total           5}
+             (dice/roll-command-to-roll-data ["d6"])))
+      (is (= {:roll-data       [{:roll    "1d6"
+                                 :display "1d6"
+                                 :result  [5]
+                                 :total   5}
+                                {:display "+"
+                                 :modifier +}
+                                {:roll    "1d6"
+                                 :display "1d6"
+                                 :result  [5]
+                                 :total   5}]
+              :final-modifiers []
+              :total           10}
+             (dice/roll-command-to-roll-data ["d6" "+" "d6"])))
+      (is (= {:roll-data       [{:roll    "1d6"
+                                 :display "1d6"
+                                 :result  [5]
+                                 :total   5}
+                                {:display "+"
+                                 :modifier +}
+                                {:roll    "1d6"
+                                 :display "1d6"
+                                 :result  [5]
+                                 :total   5}
+                                "^"
+                                {:roll    "1d8"
+                                 :display "1d8"
+                                 :result  [5]
+                                 :total   5}]
+              :final-modifiers []
+              :total           10}
+             (dice/roll-command-to-roll-data ["d6" "+" "d6" "^" "d8"])))
+      (is (= {:roll-data       [{:roll    "1d6"
+                                 :display "1d6!"
+                                 :result  [5]
+                                 :total   5}
+                                {:display "+"
+                                 :modifier +}
+                                {:roll    "1d6"
+                                 :display "1d6!"
+                                 :result  [5]
+                                 :total   5}
+                                "^"
+                                {:roll    "1d8"
+                                 :display "1d8!"
+                                 :result  [5]
+                                 :total   5}]
+              :final-modifiers []
+              :total           10}
+             (dice/roll-command-to-roll-data ["d6!" "+" "d6!" "^" "d8!"])))
+      (is (= {:roll-data       [{:roll    "1d6"
+                                 :display "1d6!"
+                                 :result  [5]
+                                 :total   5}
+                                {:display "+"
+                                 :modifier +}
+                                {:roll    "1d6"
+                                 :display "1d6!"
+                                 :result  [5]
+                                 :total   5}
+                                "^"
+                                {:roll    "1d8"
+                                 :display "1d8!"
+                                 :result  [5]
+                                 :total   5}]
+              :final-modifiers [{:modifier -
+                                 :display "-"}
+                                {:total 2}]
+              :total           8}
+             (dice/roll-command-to-roll-data ["d6!" "+" "d6!" "^" "d8!" "-" "2"]))))))
 
 (deftest test-generate-message-pretext
   (testing "We should get an appropriate pre-text string when passed roll-data"
     (is (= "You rolled 5"
-           (dice/generate-message-pretext {:roll-tree       [[{:roll    "1d6"
-                                                               :display "1d6"
-                                                               :result  [5]
-                                                               :total   5}]]
+           (dice/generate-message-pretext {:roll-data       [{:total 5}]
                                            :total-modifiers []
                                            :total           5})))
     (is (= "You rolled 2 + 7 + 8 + 18 = 35"
-           (dice/generate-message-pretext {:roll-tree       [[{:roll    "1d6"
-                                                               :display "1d6"
-                                                               :result  [2]
-                                                               :total   2}
-                                                              {:roll    "1d8"
-                                                               :display "1d8"
-                                                               :result  [7]
-                                                               :total   7}
-                                                              {:roll    "1d10"
-                                                               :display "1d10"
-                                                               :result  [8]
-                                                               :total   8}
-                                                              {:roll    "1d20"
-                                                               :display "1d20"
-                                                               :result  [18]
-                                                               :total   18}]]
+           (dice/generate-message-pretext {:roll-data       [{:total 2}
+                                                             {:display "+"}
+                                                             {:total 7}
+                                                             {:display "+"}
+                                                             {:total 8}
+                                                             {:display "+"}
+                                                             {:total 18}]
                                            :total-modifiers []
                                            :total           35})))
-    (is (= "You rolled 18 - 2 = 16"
-           (dice/generate-message-pretext {:roll-tree       [[{:roll    "1d20"
-                                                               :display "1d20"
-                                                               :result  [18]
-                                                               :total   18}
-                                                              {:modifier "-"
-                                                               :value    2
-                                                               :display  "- 2"
-                                                               :total    -2}]]
+    (is (= "You rolled 2 X 7 / 7 + 50 - 2 = 50"
+           (dice/generate-message-pretext {:roll-data       [{:total 2}
+                                                             {:display "X"}
+                                                             {:total 7}
+                                                             {:display "/"}
+                                                             {:total 7}
+                                                             {:display "+"}
+                                                             {:total 50}
+                                                             {:display "-"}
+                                                             {:total 2}]
                                            :total-modifiers []
-                                           :total           16})))
-    (is (= "You rolled 18 - 2 ^ 20 + 50 = 70"
-           (dice/generate-message-pretext {:roll-tree       [[{:roll    "1d20"
-                                                               :display "1d20"
-                                                               :result  [18]
-                                                               :total   18}
-                                                              {:modifier "-"
-                                                               :value    2
-                                                               :display  "- 2"
-                                                               :total    -2}]
-                                                             [{:roll     "4d8"
-                                                               :display "4d8"
-                                                               :result  [5 6 7 2]
-                                                               :total   20}]]
-                                           :total-modifiers [{:modifier "+"
-                                                              :value    50
-                                                              :display  "+ 50"
-                                                              :total    50}]
-                                           :total           70})))
-    (is (= "You rolled -10 + 50 = 40"
-           (dice/generate-message-pretext {:roll-tree       [[{:modifier "-"
-                                                               :value    10
-                                                               :display  "- 10"
-                                                               :total    -10}]]
-                                           :total-modifiers [{:modifier "+"
-                                                              :value    50
-                                                              :display  "+ 50"
-                                                              :total    50}]
-                                           :total           40})))
-    (is (= "You rolled 1000 - 50 = 950"
-           (dice/generate-message-pretext {:roll-tree       [[{:modifier "+"
-                                                               :value    1000
-                                                               :display  "+ 10"
-                                                               :total    1000}]]
-                                           :total-modifiers [{:modifier "-"
-                                                              :value    50
-                                                              :display  "- 50"
-                                                              :total    -50}]
-                                           :total           950})))))
+                                           :total           50})))
+    (is (= "You rolled 4 + 6 ^ 11 = 11"
+           (dice/generate-message-pretext {:roll-data       [{:total 4}
+                                                             {:display "+"}
+                                                             {:total 6}
+                                                             "^"
+                                                             {:total 11}]
+                                           :total-modifiers []
+                                           :total           11})))
+    (is (= "You rolled 4 + 6 ^ 11 + 2 = 13"
+           (dice/generate-message-pretext {:roll-data       [{:total 4}
+                                                             {:display "+"}
+                                                             {:total 6}
+                                                             "^"
+                                                             {:total 11}]
+                                           :total-modifiers [{:display "+"}
+                                                             {:total 2}]
+                                           :total           13})))))
 
 (deftest test-generate-message-body
   (testing "We should get an appropriate list of slack attachment fields when passed a roll tree"
@@ -339,3 +363,68 @@
            (dice/bold-numbers-in-string "abc")))
     (is (= "*1* + *2* + *3* = *6*"
            (dice/bold-numbers-in-string "1 + 2 + 3 = 6")))))
+
+(deftest test-separate-final-modifiers
+  (testing "given a list of commands, returns a list of two sets.
+  The first being the roll command and the
+  second being modifiers that need to be applied to the whole roll."
+    (is (= ['("d6") '()]
+           (dice/separate-final-modifiers ["d6"])))
+    (is (= ['("d6" "+" "2" "^" "d8") '("*" "2")]
+           (dice/separate-final-modifiers ["d6" "+" "2" "^" "d8" "*" "2"])))
+    (is (= ['("d6" "+" "2" "^" "d8" "-" "2" "^" "d12" "^" "d20") '("+" "2")]
+           (dice/separate-final-modifiers ["d6" "+" "2" "^" "d8" "-" "2" "^" "d12" "^" "d20" "+" "2"])))))
+
+(deftest test-add-implied-modifiers
+  (testing "given a list of commands, return the list of commands with implied addition modifier
+  between dice rolls and numbers"
+    (is (= ["d6" "+" "2"]
+           (dice/add-implied-modifiers ["d6" "+" "2"])))
+    (is (= ["d6" "+" "2"]
+           (dice/add-implied-modifiers ["d6" "2"])))
+    (is (= ["d6" "+" "2" "-" "5"]
+           (dice/add-implied-modifiers ["d6" "2" "-" "5"])))))
+
+(deftest test-break-apart-modifiers-and-numbers
+  (testing "given a list of commands, return a list of commands where [<modifier><integer>] is broken
+  apart into ]<modifier> <integer>]"
+    (is (= ["d6" "+" "2"]
+           (dice/break-apart-modifiers-and-numbers ["d6" "+" "2"])))
+    (is (= ["d6" "+" "2"]
+           (dice/break-apart-modifiers-and-numbers ["d6" "+2"])))
+    (is (= ["d6" "+" "2" "-" "2" "*" "2" "/" "2"]
+           (dice/break-apart-modifiers-and-numbers ["d6" "+2" "-2" "*2" "/2"])))))
+
+(deftest test-remove-ending-modifiers
+  (testing "given a list of commands, if there are modifiers on the end they should be removed"
+    (is (= ["d6" "+" "2"]
+           (dice/remove-ending-modifiers ["d6" "+" "2" "+"])))
+    (is (= []
+           (dice/remove-ending-modifiers ["-" "*" "/" "+"])))))
+
+(deftest test-remove-beginning-modifiers
+  (testing "given a list of commands, if there are modifiers at the beginning they should be removed"
+    (is (= ["d6" "+" "2"]
+           (dice/remove-beginning-modifiers ["+" "d6" "+" "2"])))
+    (is (= []
+           (dice/remove-beginning-modifiers ["-" "+" "*" "/"])))))
+
+(deftest test-reduce-adjacent-modifiers-to-one
+  (testing "given a list of commands, adjacent modifiers should be reduced to the first modifier"
+    (is (= ["d6" "+" "2"]
+           (dice/reduce-adjacent-modifiers-to-one ["d6" "+" "+" "2"])))
+    (is (= ["d6" "*" "2"]
+           (dice/reduce-adjacent-modifiers-to-one ["d6" "*" "+" "-" "/" "2"])))))
+
+(deftest test-generate-formatted-command-list
+  (testing "given a list of commands, remove tokens that are not valid dice notation"
+    (is (= ["d6"]
+           (dice/generate-formatted-command-list ["d6"])))
+    (is (= ["d6" "^" "d8" "+" "2"]
+           (dice/generate-formatted-command-list ["d6" "^" "d8" "2"])))
+    (is (= ["d6" "^" "d8" "+" "2" "^" "d10" "^" "d20" "+" "10"]
+           (dice/generate-formatted-command-list ["d6" "^" "d8" "2" "^" "d10" "^" "d20" "10"])))
+    (is (= ["d6"]
+           (dice/generate-formatted-command-list ["d6" "dog" "cat"])))
+    (is (= []
+           (dice/generate-formatted-command-list ["boop" "dog" "cat"])))))
